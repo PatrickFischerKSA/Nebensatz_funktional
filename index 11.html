@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Lernspiel – Funktionale Nebensatzanalyse</title>
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        margin: 0; padding: 0;
+        background: linear-gradient(135deg,#e3f2fd,#fce4ec);
+        color: #222;
+    }
+    .container {
+        max-width: 960px;
+        margin: 30px auto;
+        background: white;
+        padding: 25px 28px 35px;
+        border-radius: 18px;
+        box-shadow: 0 12px 25px rgba(0,0,0,0.12);
+    }
+    h1 {
+        text-align: center;
+        margin-top: 0;
+    }
+    .subtitle {
+        text-align:center;
+        color:#555;
+        margin-bottom:22px;
+    }
+    .badge {
+        display:inline-block;
+        padding:3px 10px;
+        border-radius:999px;
+        font-size:0.8rem;
+        background:#e3f2fd;
+        color:#1565c0;
+        margin-right:6px;
+    }
+    .sentence-box {
+        background:#f4f7fb;
+        padding:18px;
+        border-left:6px solid #42a5f5;
+        margin-bottom:18px;
+        border-radius:10px;
+        font-size:1.15rem;
+    }
+    select {
+        padding:10px 14px;
+        border-radius:10px;
+        border:1px solid #bbb;
+        font-size:1rem;
+        min-width:260px;
+    }
+    button {
+        padding:10px 18px;
+        margin:8px 6px 0;
+        border:none;
+        border-radius:999px;
+        cursor:pointer;
+        background:#42a5f5;
+        color:white;
+        font-size:0.95rem;
+        box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    }
+    button:hover {
+        background:#1e88e5;
+    }
+    .secondary {
+        background:#eceff1;
+        color:#37474f;
+        box-shadow:none;
+    }
+    .secondary:hover {
+        background:#cfd8dc;
+    }
+    .feedback {
+        margin-top:15px;
+        padding:14px;
+        border-radius:10px;
+        font-weight:600;
+        display:none;
+    }
+    .correct { background:#c8f7c5; color:#145a1f; }
+    .wrong { background:#ffdde0; color:#8b0000; }
+    .explanation {
+        display:none;
+        margin-top:10px;
+        background:#fafafa;
+        border-left:4px solid #b0bec5;
+        padding:12px 14px;
+        border-radius:8px;
+        font-size:0.95rem;
+    }
+    .scoreboard {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:15px;
+        font-size:0.95rem;
+        color:#444;
+    }
+    .scoreboard strong { font-size:1.05rem; }
+    .teacher-box {
+        margin-top:30px;
+        padding-top:20px;
+        border-top:1px dashed #ccc;
+    }
+    details summary {
+        cursor:pointer;
+        font-weight:600;
+        margin-bottom:10px;
+    }
+    table {
+        border-collapse:collapse;
+        width:100%;
+        font-size:0.9rem;
+    }
+    th, td {
+        border:1px solid #ddd;
+        padding:6px 8px;
+        vertical-align:top;
+    }
+    th {
+        background:#eceff1;
+    }
+    .small-note {
+        font-size:0.8rem;
+        color:#666;
+        margin-top:4px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Funktionale Nebensatzanalyse</h1>
+    <p class="subtitle">
+        <span class="badge">Ersatzprobe</span>
+        <span class="badge">Sofortkorrektur</span>
+        <span class="badge">Punktesystem</span><br>
+        Bestimme zu jedem Nebensatz, ob er als Subjektsatz, Objektsatz, Adverbialsatz oder Attributsatz fungiert.
+    </p>
+
+    <div class="scoreboard">
+        <div><strong id="progress">Satz 1 / 50</strong></div>
+        <div>Richtige Antworten: <strong id="score">0</strong></div>
+    </div>
+
+    <div id="sentence" class="sentence-box"></div>
+
+    <h3>Welche Funktion hat der hervorgehobene Nebensatz?</h3>
+    <select id="choice" onchange="check()">
+        <option value="">Bitte auswählen …</option>
+        <option value="Subjektsatz">Subjektsatz</option>
+        <option value="Objektsatz">Objektsatz</option>
+        <option value="Adverbialsatz">Adverbialsatz</option>
+        <option value="Attributsatz">Attributsatz</option>
+    </select>
+
+    <div>
+        <button class="secondary" onclick="showErsatzprobe()">Ersatzprobe anzeigen</button>
+        <button onclick="nextItem()">Nächster Satz</button>
+    </div>
+
+    <div id="feedback" class="feedback"></div>
+    <div id="explanation" class="explanation"></div>
+
+    <div class="teacher-box">
+        <details>
+            <summary>Lehrpersonen-Bereich (Lösungen & Erwartungshorizont)</summary>
+            <p class="small-note">
+                Hinweis: Die Tabelle kann als Erwartungshorizont dienen. Sie zeigt zu jedem Satz die funktionale Bestimmung
+                des Nebensatzes sowie eine mögliche Ersatzprobe und eine Kurzbegründung.
+            </p>
+            <table id="teacher-table">
+                <thead>
+                    <tr>
+                        <th>Nr.</th>
+                        <th>Satz</th>
+                        <th>Funktion</th>
+                        <th>Ersatzprobe</th>
+                        <th>Kurzbegründung</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </details>
+    </div>
+</div>
+
+<script>
+const items = [
+    // 1–10
+    {
+        satz: "Ich sehe, dass ich meine Ziele erreiche.",
+        funktion: "Objektsatz",
+        ersatz: "Ich sehe das Erreichen meiner Ziele.",
+        erklärung: "Der Nebensatz beantwortet die Frage 'Was sehe ich?' und steht damit in Objektfunktion."
+    },
+    {
+        satz: "Wer Karriere machen will, bildet sich weiter.",
+        funktion: "Subjektsatz",
+        ersatz: "Der karriereorientierte Mensch bildet sich weiter.",
+        erklärung: "Der Nebensatz übernimmt die Rolle des Subjekts: Wer bildet sich weiter?"
+    },
+    {
+        satz: "Wenn es regnet, fällt die Theateraufführung aus.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei Regen fällt die Theateraufführung aus.",
+        erklärung: "Der Nebensatz gibt eine Bedingung an und fungiert als Adverbiale (konditional)."
+    },
+    {
+        satz: "Hunde, die bellen, beissen nicht.",
+        funktion: "Attributsatz",
+        ersatz: "Bellende Hunde beissen nicht.",
+        erklärung: "Der Nebensatz bestimmt das Nomen 'Hunde' näher und ist damit ein Attribut."
+    },
+    {
+        satz: "Ich fand, was ich verloren hatte.",
+        funktion: "Objektsatz",
+        ersatz: "Ich fand meinen verlorenen Gegenstand.",
+        erklärung: "Der Nebensatz ersetzt ein Akkusativobjekt zum Verb 'fand'."
+    },
+    {
+        satz: "Wer viel liest, erweitert seinen Wortschatz.",
+        funktion: "Subjektsatz",
+        ersatz: "Viellesende Menschen erweitern ihren Wortschatz.",
+        erklärung: "Der Nebensatz beantwortet die Frage 'Wer erweitert seinen Wortschatz?'."
+    },
+    {
+        satz: "Sie fragte ihn, ob er morgen Zeit habe.",
+        funktion: "Objektsatz",
+        ersatz: "Sie fragte ihn nach seiner Zeit am nächsten Tag.",
+        erklärung: "Der Nebensatz gibt den Inhalt der Frage wieder und steht als Objekt."
+    },
+    {
+        satz: "Wenn du pünktlich kommst, beginnen wir rechtzeitig.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei deiner Pünktlichkeit beginnen wir rechtzeitig.",
+        erklärung: "Der Nebensatz beschreibt eine Bedingung/Zeitbestimmung (Adverbiale)."
+    },
+    {
+        satz: "Die Schülerin, die immer zu spät kommt, verpasste den Anfang.",
+        funktion: "Attributsatz",
+        ersatz: "Die immer zu spät kommende Schülerin verpasste den Anfang.",
+        erklärung: "Der Nebensatz charakterisiert 'die Schülerin' näher → Attribut."
+    },
+    {
+        satz: "Ich erinnere mich daran, wie wir früher jeden Nachmittag gespielt haben.",
+        funktion: "Objektsatz",
+        ersatz: "Ich erinnere mich an das Spielen an den Nachmittagen früher.",
+        erklärung: "Der Nebensatz ergänzt das Verb 'erinnere mich' als Objekt (Woran erinnere ich mich?)."
+    },
+
+    // 11–20
+    {
+        satz: "Wer früh aufsteht, hat mehr vom Tag.",
+        funktion: "Subjektsatz",
+        ersatz: "Frühaufstehende Menschen haben mehr vom Tag.",
+        erklärung: "Der Nebensatz übernimmt die Subjektfunktion: Wer hat mehr vom Tag?"
+    },
+    {
+        satz: "Sie hoffte, dass die Prüfung gut laufen würde.",
+        funktion: "Objektsatz",
+        ersatz: "Sie hoffte auf einen guten Verlauf der Prüfung.",
+        erklärung: "Der Nebensatz bildet den erhofften Inhalt und steht als Objekt."
+    },
+    {
+        satz: "Obwohl es schon spät war, las er weiter.",
+        funktion: "Adverbialsatz",
+        ersatz: "Trotz der späten Uhrzeit las er weiter.",
+        erklärung: "Der Nebensatz drückt eine Einräumung aus und fungiert als Adverbiale (konzessiv)."
+    },
+    {
+        satz: "Die Stadt, in der ich aufgewachsen bin, hat sich stark verändert.",
+        funktion: "Attributsatz",
+        ersatz: "Meine Heimatstadt hat sich stark verändert.",
+        erklärung: "Der Nebensatz bezieht sich auf 'die Stadt' und wirkt wie ein Attribut."
+    },
+    {
+        satz: "Ich weiss, dass du die Wahrheit sagst.",
+        funktion: "Objektsatz",
+        ersatz: "Ich weiss deine wahrheitsgemässe Aussage.",
+        erklärung: "Der Nebensatz ergänzt das Verb 'weiss' als Objekt (Was weiss ich?)."
+    },
+    {
+        satz: "Wer aufmerksam zuhört, versteht den Stoff besser.",
+        funktion: "Subjektsatz",
+        ersatz: "Aufmerksame Zuhörer verstehen den Stoff besser.",
+        erklärung: "Der Nebensatz bezeichnet die Personengruppe, die versteht → Subjekt."
+    },
+    {
+        satz: "Wenn die Sonne scheint, machen wir ein Picknick.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei Sonnenschein machen wir ein Picknick.",
+        erklärung: "Der Nebensatz beschreibt die Bedingung/Zeit → Adverbialsatz."
+    },
+    {
+        satz: "Die Lehrerin, die das Projekt betreut, ist sehr engagiert.",
+        funktion: "Attributsatz",
+        ersatz: "Die das Projekt betreuende Lehrerin ist sehr engagiert.",
+        erklärung: "Der Nebensatz bestimmt das Nomen 'Lehrerin' näher → Attribut."
+    },
+    {
+        satz: "Wir fragten uns, warum der Zug schon wieder Verspätung hatte.",
+        funktion: "Objektsatz",
+        ersatz: "Wir fragten uns nach dem Grund der erneuten Zugverspätung.",
+        erklärung: "Der Nebensatz gibt den erfragten Inhalt an und fungiert als Objekt."
+    },
+    {
+        satz: "Wer gesund bleiben will, sollte sich regelmässig bewegen.",
+        funktion: "Subjektsatz",
+        ersatz: "Menschen mit dem Wunsch nach Gesundheit sollten sich regelmässig bewegen.",
+        erklärung: "Der Nebensatz steht an Subjektstelle: Wer sollte sich bewegen?"
+    },
+
+    // 21–30
+    {
+        satz: "Wenn der Unterricht pünktlich endet, schaffe ich meinen Zug.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei pünktlichem Unterrichtsende schaffe ich meinen Zug.",
+        erklärung: "Der Nebensatz drückt eine Bedingung/Zeitbestimmung aus → Adverbialsatz."
+    },
+    {
+        satz: "Die Freundin, der ich das Buch geliehen habe, wohnt in Bern.",
+        funktion: "Attributsatz",
+        ersatz: "Meine Freundin in Bern, der ich das Buch geliehen habe, wohnt dort.",
+        erklärung: "Der Nebensatz spezifiziert 'die Freundin' genauer → Attribut."
+    },
+    {
+        satz: "Ich glaube, dass wir das Problem lösen können.",
+        funktion: "Objektsatz",
+        ersatz: "Ich glaube an unsere Fähigkeit, das Problem zu lösen.",
+        erklärung: "Der Nebensatz formuliert den geglaubten Inhalt und steht als Objekt."
+    },
+    {
+        satz: "Wer Verantwortung übernimmt, gewinnt das Vertrauen anderer.",
+        funktion: "Subjektsatz",
+        ersatz: "Verantwortungsbewusste Menschen gewinnen das Vertrauen anderer.",
+        erklärung: "Der Nebensatz beschreibt das Subjekt der Aussage → Subjektsatz."
+    },
+    {
+        satz: "Wenn der Alarm losgeht, müssen alle das Gebäude verlassen.",
+        funktion: "Adverbialsatz",
+        ersatz: "Beim Auslösen des Alarms müssen alle das Gebäude verlassen.",
+        erklärung: "Der Nebensatz gibt eine Bedingung an (wann?) → Adverbialsatz."
+    },
+    {
+        satz: "Die Aufgabe, die wir gestern bekommen haben, ist ziemlich anspruchsvoll.",
+        funktion: "Attributsatz",
+        ersatz: "Die gestern erhaltene Aufgabe ist ziemlich anspruchsvoll.",
+        erklärung: "Der Nebensatz bezieht sich auf 'die Aufgabe' → Attribut."
+    },
+    {
+        satz: "Sie ahnte, dass es nicht einfach werden würde.",
+        funktion: "Objektsatz",
+        ersatz: "Sie ahnte die kommende Schwierigkeit.",
+        erklärung: "Der Nebensatz steht als Objekt zum Verb 'ahnte' (Was ahnte sie?)."
+    },
+    {
+        satz: "Wer seine Ziele klar formuliert, kann besser planen.",
+        funktion: "Subjektsatz",
+        ersatz: "Menschen mit klar formulierten Zielen können besser planen.",
+        erklärung: "Der Nebensatz füllt die Subjektstelle aus: Wer kann besser planen?"
+    },
+    {
+        satz: "Wenn der Lehrer eine Frage stellt, melden sich viele Schülerinnen und Schüler.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei einer Frage des Lehrers melden sich viele Schülerinnen und Schüler.",
+        erklärung: "Der Nebensatz beschreibt die Situation/Zeit → Adverbialsatz."
+    },
+    {
+        satz: "Das Buch, das du mir empfohlen hast, hat mir sehr gefallen.",
+        funktion: "Attributsatz",
+        ersatz: "Dein empfohlenes Buch hat mir sehr gefallen.",
+        erklärung: "Der Nebensatz bestimmt 'das Buch' näher und wirkt wie ein Attribut."
+    },
+
+    // 31–40
+    {
+        satz: "Ich befürchte, dass wir zu spät kommen.",
+        funktion: "Objektsatz",
+        ersatz: "Ich befürchte unsere Verspätung.",
+        erklärung: "Der Nebensatz gibt das Befürchtete wieder und steht als Objekt."
+    },
+    {
+        satz: "Wer Hilfe braucht, kann sich an mich wenden.",
+        funktion: "Subjektsatz",
+        ersatz: "Hilfsbedürftige Personen können sich an mich wenden.",
+        erklärung: "Der Nebensatz steht als Subjekt: Wer kann sich an mich wenden?"
+    },
+    {
+        satz: "Wenn niemand nachfragt, bleibt vieles unklar.",
+        funktion: "Adverbialsatz",
+        ersatz: "Ohne Nachfragen bleibt vieles unklar.",
+        erklärung: "Der Nebensatz beschreibt eine Bedingung (unter welcher Voraussetzung?) → Adverbialsatz."
+    },
+    {
+        satz: "Der Film, den wir gestern gesehen haben, war beeindruckend.",
+        funktion: "Attributsatz",
+        ersatz: "Der gestern gesehene Film war beeindruckend.",
+        erklärung: "Der Nebensatz beschreibt 'den Film' genauer → Attribut."
+    },
+    {
+        satz: "Sie wusste, dass er ihr nicht die ganze Wahrheit gesagt hatte.",
+        funktion: "Objektsatz",
+        ersatz: "Sie wusste um seine unvollständige Wahrheit.",
+        erklärung: "Der Nebensatz gibt den Wissensinhalt an und ist Objekt."
+    },
+    {
+        satz: "Wer ehrlich ist, gewinnt langfristig.",
+        funktion: "Subjektsatz",
+        ersatz: "Ehrliche Menschen gewinnen langfristig.",
+        erklärung: "Der Nebensatz fungiert als Subjekt: Wer gewinnt langfristig?"
+    },
+    {
+        satz: "Wenn du leiser sprichst, verstehen dich die anderen besser.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei leiserer Sprechweise verstehen dich die anderen besser.",
+        erklärung: "Der Nebensatz beschreibt die Bedingung (unter welcher Bedingung?) → Adverbialsatz."
+    },
+    {
+        satz: "Die Entscheidung, die wir heute treffen, wird Folgen haben.",
+        funktion: "Attributsatz",
+        ersatz: "Die heute getroffene Entscheidung wird Folgen haben.",
+        erklärung: "Der Nebensatz charakterisiert 'die Entscheidung' näher → Attribut."
+    },
+    {
+        satz: "Ich erinnere mich, wie nervös ich vor der Präsentation war.",
+        funktion: "Objektsatz",
+        ersatz: "Ich erinnere mich an meine Nervosität vor der Präsentation.",
+        erklärung: "Der Nebensatz steht als Objekt zu 'erinnere mich'."
+    },
+    {
+        satz: "Wer Fragen stellt, zeigt Interesse.",
+        funktion: "Subjektsatz",
+        ersatz: "Fragende Personen zeigen Interesse.",
+        erklärung: "Der Nebensatz beantwortet 'Wer zeigt Interesse?' → Subjektsatz."
+    },
+
+    // 41–50
+    {
+        satz: "Wenn der Wecker klingelt, stehe ich auf.",
+        funktion: "Adverbialsatz",
+        ersatz: "Beim Klingeln des Weckers stehe ich auf.",
+        erklärung: "Der Nebensatz gibt den Zeitpunkt an und fungiert als Adverbiale der Zeit."
+    },
+    {
+        satz: "Die Gruppe, mit der wir zusammenarbeiten, ist sehr zuverlässig.",
+        funktion: "Attributsatz",
+        ersatz: "Die Gruppe unseres Kooperationspartners ist sehr zuverlässig.",
+        erklärung: "Der Nebensatz bezieht sich auf 'die Gruppe' und ist ein Attributssatz."
+    },
+    {
+        satz: "Er behauptet, dass er alle Aufgaben erledigt habe.",
+        funktion: "Objektsatz",
+        ersatz: "Er behauptet seine vollständige Aufgabenerledigung.",
+        erklärung: "Der Nebensatz formuliert den behaupteten Inhalt und steht als Objekt."
+    },
+    {
+        satz: "Wer aufmerksam liest, entdeckt viele Details.",
+        funktion: "Subjektsatz",
+        ersatz: "Aufmerksame Leser entdecken viele Details.",
+        erklärung: "Der Nebensatz füllt die Subjektstelle aus: Wer entdeckt viele Details?"
+    },
+    {
+        satz: "Wenn du regelmässig übst, machst du schnelle Fortschritte.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei regelmässigem Üben machst du schnelle Fortschritte.",
+        erklärung: "Der Nebensatz nennt die Bedingung (unter welcher Bedingung?) → Adverbialsatz."
+    },
+    {
+        satz: "Die Regeln, die im Vertrag festgehalten sind, gelten für alle.",
+        funktion: "Attributsatz",
+        ersatz: "Die im Vertrag festgehaltenen Regeln gelten für alle.",
+        erklärung: "Der Nebensatz beschreibt 'die Regeln' genauer → Attributssatz."
+    },
+    {
+        satz: "Ich fürchte, dass wir den Anschluss verpassen.",
+        funktion: "Objektsatz",
+        ersatz: "Ich fürchte das Verpassen unseres Anschlusses.",
+        erklärung: "Der Nebensatz gibt den befürchteten Sachverhalt an und steht als Objekt."
+    },
+    {
+        satz: "Wer seine Unterlagen ordnet, behält den Überblick.",
+        funktion: "Subjektsatz",
+        ersatz: "Menschen mit geordneten Unterlagen behalten den Überblick.",
+        erklärung: "Der Nebensatz übernimmt die Subjektfunktion: Wer behält den Überblick?"
+    },
+    {
+        satz: "Wenn die Temperaturen sinken, beginnt es zu schneien.",
+        funktion: "Adverbialsatz",
+        ersatz: "Bei sinkenden Temperaturen beginnt es zu schneien.",
+        erklärung: "Der Nebensatz beschreibt eine Bedingung und steht als Adverbialsatz."
+    },
+    {
+        satz: "Der Vortrag, den sie vorbereitet hat, war sehr überzeugend.",
+        funktion: "Attributsatz",
+        ersatz: "Ihr vorbereiteter Vortrag war sehr überzeugend.",
+        erklärung: "Der Nebensatz bezieht sich auf 'den Vortrag' und fungiert als Attribut."
+    }
+];
+
+let order = [];
+let currentIndex = 0;
+let score = 0;
+let answeredCurrent = false;
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function initOrder() {
+    order = [];
+    for (let i = 0; i < items.length; i++) order.push(i);
+    shuffle(order);
+    currentIndex = 0;
+}
+
+function loadItem() {
+    if (currentIndex >= order.length) {
+        initOrder();
+    }
+    const idx = order[currentIndex];
+    const item = items[idx];
+
+    document.getElementById("sentence").textContent = item.satz;
+    document.getElementById("choice").value = "";
+    document.getElementById("feedback").style.display = "none";
+    document.getElementById("explanation").style.display = "none";
+    answeredCurrent = false;
+
+    document.getElementById("progress").textContent =
+        "Satz " + (currentIndex + 1) + " / " + items.length;
+}
+
+function check() {
+    const selected = document.getElementById("choice").value;
+    if (!selected) return;
+    const idx = order[currentIndex];
+    const item = items[idx];
+    const fb = document.getElementById("feedback");
+    const ex = document.getElementById("explanation");
+
+    if (selected === item.funktion) {
+        fb.className = "feedback correct";
+        fb.textContent = "✔ Richtig: " + item.funktion + ".";
+        if (!answeredCurrent) {
+            score++;
+            document.getElementById("score").textContent = score;
+        }
+    } else {
+        fb.className = "feedback wrong";
+        fb.textContent = "✘ Falsch: Das ist kein " + selected + ".";
+    }
+    fb.style.display = "block";
+
+    ex.innerHTML = "<strong>Begründung:</strong> " + item.erklärung;
+    ex.style.display = "block";
+    answeredCurrent = true;
+}
+
+function showErsatzprobe() {
+    const idx = order[currentIndex];
+    const item = items[idx];
+    const ex = document.getElementById("explanation");
+    ex.style.display = "block";
+    ex.innerHTML = "<strong>Ersatzprobe:</strong> " + item.ersatz +
+        "<br><br><strong>Merkregel:</strong> Ersetze den Nebensatz durch ein Satzglied. Die Rolle dieses Satzglieds im Hauptsatz zeigt die Funktion des Nebensatzes.";
+}
+
+function nextItem() {
+    currentIndex++;
+    if (currentIndex >= order.length) {
+        currentIndex = order.length; // Anzeige gleich korrigieren
+        alert("Du hast alle " + items.length + " Sätze bearbeitet! Die Reihenfolge wird jetzt neu gemischt.");
+        initOrder();
+    }
+    loadItem();
+}
+
+function buildTeacherTable() {
+    const tbody = document.querySelector("#teacher-table tbody");
+    items.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+            "<td>" + (i + 1) + "</td>" +
+            "<td>" + item.satz + "</td>" +
+            "<td>" + item.funktion + "</td>" +
+            "<td>" + item.ersatz + "</td>" +
+            "<td>" + item.erklärung + "</td>";
+        tbody.appendChild(tr);
+    });
+}
+
+initOrder();
+loadItem();
+buildTeacherTable();
+</script>
+
+</body>
+</html>
